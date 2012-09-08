@@ -6,9 +6,15 @@ CENTER_X = 200
 CENTER_Y = 200
 
 C_BLACK = "#000"
+C_BACKGROUND = "#FFF"
 C_NODE = C_BLACK
 C_ATTRACTOR = "#FAAFBE"
 C_ATTRACTION = "#38ACEC"
+
+drawRect = (context, x, y, w, h, color=C_BLACK, alpha=1) ->
+	context.globalAlpha = alpha
+	context.fillStyle = color
+	context.fillRect x, y, w, h
 
 drawCircle = (context, x, y, radius, color=C_BLACK, alpha=1) ->
 	context.globalAlpha = alpha
@@ -62,14 +68,18 @@ class Tree
 		this.nodes.push(newNode)
 		newNode.draw()
 
+	draw: ->
+		for node in this.nodes
+			node.draw()
+
 class TreeBuilder
-	constructor: (context) ->
-		this.tree = new Tree context, CENTER_X, CENTER_Y + 100
+	constructor: (@context) ->
+		this.tree = new Tree this.context, CENTER_X, CENTER_Y + 100
 
 		this.attractors = []
 		for i in [0...(20 + Math.floor(Math.random() * 20))]
 			this.attractors.push new AttractionPoint(
-							context,
+							this.context,
 							CENTER_X - 100 + Math.random() * 200,
 							CENTER_Y - 100 + Math.random() * 175)
 
@@ -107,6 +117,28 @@ class TreeBuilder
 
 		this.tree.addNode(newX, newY)
 
+	findClosestNode: (attractor) ->
+		closest = null
+		for node in this.tree.nodes
+			if not closest or distance(node, attractor) < distance(closest, attractor)
+				closest = node
+		closest
+
+	findAttractorsToRemove: ->
+		attractors = []
+
+		for attractor in this.attractors
+			closest =  this.findClosestNode attractor
+
+			if distance(closest, attractor) < KILL_DISTANCE
+				attractors.push attractor
+
+		attractors
+
+	removeReachedAttractors: ->
+		attractorsToRemove = this.findAttractorsToRemove()
+		this.attractors = (attractor for attractor in this.attractors when attractor not in attractorsToRemove)
+
 	iterate: ->
 		allAttractions = this.findAttractions()
 
@@ -114,6 +146,15 @@ class TreeBuilder
 			nodeAttractions =  (attraction for attraction in allAttractions when attraction.node == node)
 			if this.attractionExistsFor nodeAttractions
 				this.growNode node, nodeAttractions
+
+		this.removeReachedAttractors()
+		this.redraw()
+
+	redraw: ->
+		drawRect this.context, 0, 0, 400, 400, C_BACKGROUND
+		this.tree.draw()
+		for attractor in this.attractors
+			attractor.draw()
 
 $().ready ->
 	console.log "give 'er"
