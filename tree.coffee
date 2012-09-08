@@ -76,35 +76,44 @@ class TreeBuilder
 		for attractor in this.attractors
 			attractor.draw()
 
-	iterate: ->
+	findAttractions: ->
 		allAttractions = []
 		for attractor in this.attractors
 			attraction = attractor.attraction(this.tree.nodes)
 			allAttractions.push attraction if attraction
+		return allAttractions
+
+	attractionExistsFor: (attractions) ->
+		attractions.length > 0
+
+	growNode: (node, attractions) ->
+		avgX = 0
+		avgY = 0
+
+		for attraction in attractions
+			avgX += attraction.point.x
+			avgY += attraction.point.y
+
+		avgX /= attractions.length
+		avgY /= attractions.length
+
+		dx = avgX - node.x
+		dy = avgY - node.y
+
+		normalFactor = Math.sqrt(dx * dx + dy * dy)
+
+		newX = node.x + NODE_DISTANCE * dx / normalFactor
+		newY = node.y + NODE_DISTANCE * dy / normalFactor
+
+		this.tree.addNode(newX, newY)
+
+	iterate: ->
+		allAttractions = this.findAttractions()
 
 		for node in this.tree.nodes
 			nodeAttractions =  (attraction for attraction in allAttractions when attraction.node == node)
-			if nodeAttractions.length > 0
-				avgX = 0
-				avgY = 0
-
-				for attraction in nodeAttractions
-					avgX += attraction.point.x
-					avgY += attraction.point.y
-
-				avgX /= nodeAttractions.length
-				avgY /= nodeAttractions.length
-
-				dx = avgX - node.x
-				dy = avgY - node.y
-
-				normalFactor = Math.sqrt(dx * dx + dy * dy)
-
-				newX = node.x + NODE_DISTANCE * dx / normalFactor
-				newY = node.y + NODE_DISTANCE * dy / normalFactor
-
-				this.tree.addNode(newX, newY)
-
+			if this.attractionExistsFor nodeAttractions
+				this.growNode node, nodeAttractions
 
 $().ready ->
 	console.log "give 'er"
