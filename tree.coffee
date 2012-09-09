@@ -1,6 +1,8 @@
-NODE_DISTANCE = 10
-ATTRACTION_RADIUS = 20
-KILL_DISTANCE = 10
+NODE_DISTANCE = 7
+ATTRACTION_RADIUS = 40
+KILL_DISTANCE = 15
+MIN_ATTRACTIONS = 40
+MAX_ATTRACTIONS = 80
 
 CENTER_X = 200
 CENTER_Y = 200
@@ -77,11 +79,11 @@ class TreeBuilder
 		this.tree = new Tree this.context, CENTER_X, CENTER_Y + 100
 
 		this.attractors = []
-		for i in [0...(20 + Math.floor(Math.random() * 20))]
+		for i in [0...(MIN_ATTRACTIONS + Math.floor(Math.random() * (MAX_ATTRACTIONS - MIN_ATTRACTIONS)))]
 			this.attractors.push new AttractionPoint(
 							this.context,
 							CENTER_X - 100 + Math.random() * 200,
-							CENTER_Y - 100 + Math.random() * 175)
+							CENTER_Y - 100 + Math.random() * 150)
 
 		for attractor in this.attractors
 			attractor.draw()
