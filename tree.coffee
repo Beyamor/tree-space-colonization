@@ -1,8 +1,8 @@
-NODE_DISTANCE = 7
-ATTRACTION_RADIUS = 40
-KILL_DISTANCE = 15
-MIN_ATTRACTIONS = 40
-MAX_ATTRACTIONS = 80
+NODE_DISTANCE = 5
+ATTRACTION_RADIUS = 50
+KILL_DISTANCE = 4 * NODE_DISTANCE
+MIN_ATTRACTIONS = 50
+MAX_ATTRACTIONS = 90
 
 CENTER_X = 200
 CENTER_Y = 200
@@ -29,6 +29,13 @@ drawPoint = (context, x, y, color=C_BLACK) ->
 	drawCircle(context, x, y, 2, color)
 
 distance = (p1, p2) -> Math.sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y))
+
+class Vec2
+	constructor: (@x, @y) ->
+
+	plus: (v) -> new Vec2 v.x + this.x, v.y + this.y
+	length: -> Math.sqrt this.x*this.x + this.y*this.y
+	normal: -> new Vec2 this.x / this.length(), this.y / this.length()
 
 class Attraction
 	constructor: (@node, @point) ->
@@ -60,7 +67,7 @@ class TreeNode
 
 class Tree
 	constructor: (@context, @x, @y) ->
-		this.nodes = (new TreeNode(this.context, this.x, this.y - i * NODE_DISTANCE) for i in [0...10])
+		this.nodes = (new TreeNode(this.context, this.x, this.y - i * NODE_DISTANCE) for i in [0...15])
 
 		for node in this.nodes
 			node.draw()
@@ -111,11 +118,14 @@ class TreeBuilder
 
 		dx = avgX - node.x
 		dy = avgY - node.y
+		d = new Vec2 dx, dy
 
-		normalFactor = Math.sqrt(dx * dx + dy * dy)
+		g = new Vec2 0, 10 # bias upwards
+		
+		n = (d.plus g).normal()
 
-		newX = node.x + NODE_DISTANCE * dx / normalFactor
-		newY = node.y + NODE_DISTANCE * dy / normalFactor
+		newX = node.x + NODE_DISTANCE * n.x
+		newY = node.y + NODE_DISTANCE * n.y
 
 		this.tree.addNode(newX, newY)
 
