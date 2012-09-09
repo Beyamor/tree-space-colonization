@@ -12,18 +12,56 @@ C_BACKGROUND = "#FFF"
 C_NODE = C_BLACK
 C_ATTRACTOR = "#FAAFBE"
 C_ATTRACTION = "#38ACEC"
+C_CROWN = "#E9AB17"
+
+cardioidRadius = (a, theta) ->
+	a * (1 - Math.sin theta)
+
+inCardioid = (cx, cy, a, x, y) ->
+	dx = x - cx
+	dy = y - cy
+	r = Math.sqrt(dx*dx + dy*dy)
+	theta = Math.atan2(dy, dx)
+	r <= cardioidRadius(a, theta)
+
+fillContext = (context, color) ->
+	context.fillStyle = color
+	context.fill()
+
+strokeContext = (context, color, lineWidth=2) ->
+	context.lineWidth = 2
+	context.strokeStyle = color
+	context.stroke()
 
 drawRect = (context, x, y, w, h, color=C_BLACK, alpha=1) ->
 	context.globalAlpha = alpha
 	context.fillStyle = color
 	context.fillRect x, y, w, h
 
-drawCircle = (context, x, y, radius, color=C_BLACK, alpha=1) ->
+drawCircle = (context, x, y, radius, color=C_BLACK, alpha=1, filled=true) ->
 	context.globalAlpha = alpha
 	context.beginPath()
 	context.arc(x, y, radius, 0, 2 * Math.PI, false)
-	context.fillStyle = color
-	context.fill()
+	if filled
+		fillContext(context, color)
+	else
+		strokeContext(context, color)
+
+drawCardiod = (context, x, y, a, color=C_BLACK, alpha=1, filled=true) ->
+	context.globalAlpha = alpha
+	context.beginPath()
+	context.moveTo(x, y)
+	for i in [0...17]
+		thetai = i * Math.PI * 2 / 16
+		ri = cardioidRadius a, thetai
+		xi = x + ri * Math.cos thetai
+		yi = y + ri * Math.sin thetai
+		context.moveTo xi, yi if i is 0
+		context.lineTo xi, yi
+	if filled
+		fillContext context, color
+	else
+		strokeContext context, color
 
 drawPoint = (context, x, y, color=C_BLACK) ->
 	drawCircle(context, x, y, 2, color)
@@ -36,6 +74,41 @@ class Vec2
 	plus: (v) -> new Vec2 v.x + this.x, v.y + this.y
 	length: -> Math.sqrt this.x*this.x + this.y*this.y
 	normal: -> new Vec2 this.x / this.length(), this.y / this.length()
+
+class Crown
+	constructor: (@context, @x, @y) ->
+
+class CircleCrown extends Crown
+	constructor: (context, x, y, @radius) ->
+		super(context, x, y)
+
+	nextPoint: ->
+		r = Math.random() * this.radius
+		theta = Math.random() * Math.PI * 2
+		new Vec2 this.x + r * Math.cos(theta), this.y + r * Math.sin(theta)
+
+	draw: ->
+		drawCircle(this.context, this.x, this.y, this.radius, C_CROWN, 0.5, false)
+
+class CardioidCrown extends Crown
+	constructor: (context, x, y, @a) ->
+		super(context, x, y)
+
+	makeSomePoint: ->
+		theta = Math.PI * 2 * Math.random()
+		r = this.a * 2 * Math.random()
+		new Vec2(this.x + r * Math.cos(theta), this.y + r * Math.sin(theta))
+
+	pointIsValid: (point) ->
+		inCardioid(this.x, this.y, this.a, point.x, point.y)
+
+	nextPoint: ->
+		point = this.makeSomePoint()
+		point = this.makeSomePoint() until this.pointIsValid(point)
+		point
+
+	draw: ->
+		drawCardiod this.context, this.x, this.y, this.a, C_CROWN, 0.5, false
 
 class Attraction
 	constructor: (@node, @point) ->
@@ -88,16 +161,20 @@ class TreeBuilder
 		this.maxIterations = 80
 
 		this.tree = new Tree this.context, CENTER_X, CENTER_Y + 100
+		#this.crown = new CardioidCrown this.context, CENTER_X, CENTER_Y + 30, 100
+		this.crown = new CircleCrown this.context, CENTER_X, CENTER_Y - 75, 125
 
 		this.attractors = []
 		for i in [0...(MIN_ATTRACTIONS + Math.floor(Math.random() * (MAX_ATTRACTIONS - MIN_ATTRACTIONS)))]
+			pos = this.crown.nextPoint()
 			this.attractors.push new AttractionPoint(
 							this.context,
-							CENTER_X - 100 + Math.random() * 200,
-							CENTER_Y - 100 + Math.random() * 150)
+							pos.x,
+							pos.y)
 
 		for attractor in this.attractors
 			attractor.draw()
+
 
 	findAttractions: ->
 		allAttractions = []
@@ -193,6 +270,7 @@ class TreeBuilder
 
 	redraw: ->
 		drawRect this.context, 0, 0, 400, 400, C_BACKGROUND
+		this.crown.draw()
 		for attractor in this.attractors
 			attractor.draw()
 		this.tree.draw()
