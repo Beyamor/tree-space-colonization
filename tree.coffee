@@ -1,8 +1,8 @@
 NODE_DISTANCE = 5
-ATTRACTION_RADIUS = 50
+ATTRACTION_RADIUS = 30
 KILL_DISTANCE = 4 * NODE_DISTANCE
-MIN_ATTRACTIONS = 50
-MAX_ATTRACTIONS = 90
+MIN_ATTRACTIONS = 500
+MAX_ATTRACTIONS = 900
 
 CENTER_X = 200
 CENTER_Y = 200
@@ -83,6 +83,10 @@ class Tree
 
 class TreeBuilder
 	constructor: (@context) ->
+		this.isFinished = false
+		this.iterations = 0
+		this.maxIterations = 80
+
 		this.tree = new Tree this.context, CENTER_X, CENTER_Y + 100
 
 		this.attractors = []
@@ -147,11 +151,28 @@ class TreeBuilder
 
 		attractors
 
+	noAttractorsAreReachable: ->
+		reachable = false
+
+		for attractor in this.attractors
+			closest = this.findClosestNode attractor
+
+			if distance(closest, attractor) <= ATTRACTION_RADIUS
+				reachable = true
+
+		return not reachable
+
 	removeReachedAttractors: ->
 		attractorsToRemove = this.findAttractorsToRemove()
 		this.attractors = (attractor for attractor in this.attractors when attractor not in attractorsToRemove)
 
 	iterate: ->
+		++this.iterations
+		if not this.isFinished
+			this.isFinished = this.noAttractorsAreReachable()
+		if not this.isFinished and this.iterations > this.maxIterations
+			this.isFinished = true
+
 		allAttractions = this.findAttractions()
 
 		for node in this.tree.nodes
@@ -162,11 +183,19 @@ class TreeBuilder
 		this.removeReachedAttractors()
 		this.redraw()
 
+	removeAllAttractors: ->
+		this.attractors = []
+
+	finish: ->
+		console.log "finished!"
+		this.removeAllAttractors()
+		this.redraw()
+
 	redraw: ->
 		drawRect this.context, 0, 0, 400, 400, C_BACKGROUND
-		this.tree.draw()
 		for attractor in this.attractors
 			attractor.draw()
+		this.tree.draw()
 
 $().ready ->
 	console.log "give 'er"
@@ -176,5 +205,9 @@ $().ready ->
 
 	tb = new TreeBuilder context
 
-	for i in [0...100]
+	iterator = setInterval ->
 		tb.iterate()
+		if tb.isFinished
+			clearInterval iterator
+			tb.finish()
+	, 1000.0 / 20
