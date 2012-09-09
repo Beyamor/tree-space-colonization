@@ -41,16 +41,16 @@ class Attraction
 	constructor: (@node, @point) ->
 
 class AttractionPoint
-	constructor: (@context, @x, @y) ->
+	constructor: (@context, @x, @y, @attractionRadius=ATTRACTION_RADIUS, @killDistance=KILL_DISTANCE) ->
 	draw: ->
-		drawCircle this.context, this.x, this.y, ATTRACTION_RADIUS, color=C_ATTRACTION, alpha=0.2
+		drawCircle this.context, this.x, this.y, this.attractionRadius, color=C_ATTRACTION, alpha=0.2
 		drawCircle this.context, this.x, this.y, 3, color=C_ATTRACTOR
 	attraction: (nodes) ->
 		attraction = null
 		closest = null
 		
 		for node in nodes
-			if distance(node, this) < ATTRACTION_RADIUS
+			if distance(node, this) < this.attractionRadius
 				if closest == null or distance(node, this) < distance(closest, this)
 					closest = node
 
@@ -146,7 +146,7 @@ class TreeBuilder
 		for attractor in this.attractors
 			closest =  this.findClosestNode attractor
 
-			if distance(closest, attractor) < KILL_DISTANCE
+			if distance(closest, attractor) < attractor.killDistance
 				attractors.push attractor
 
 		attractors
@@ -157,7 +157,7 @@ class TreeBuilder
 		for attractor in this.attractors
 			closest = this.findClosestNode attractor
 
-			if distance(closest, attractor) <= ATTRACTION_RADIUS
+			if distance(closest, attractor) <= attractor.attractionRadius
 				reachable = true
 
 		return not reachable
