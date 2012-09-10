@@ -176,9 +176,9 @@ class TreeBuilder
 		#this.crown = new CircleCrown this.context, CENTER_X, CENTER_Y - 60, 120
 
 		crownHeight = 400 - parseInt($('#crown-height').val())
+		crownRadius = parseInt($('#crown-radius').val())
 		attractorDensity = parseFloat($('#attractor-density').val())
-		console.log attractorDensity
-		this.crown = new CircleCrown(this.context, attractorDensity, CENTER_X, crownHeight, 100)
+		this.crown = new CircleCrown(this.context, attractorDensity, CENTER_X, crownHeight, crownRadius)
 
 		this.attractors = []
 		for pos in this.crown.makePoints()
