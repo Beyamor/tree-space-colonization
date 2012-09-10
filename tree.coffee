@@ -1,8 +1,6 @@
 NODE_DISTANCE = 5
 ATTRACTION_RADIUS = 30
 KILL_DISTANCE = 4 * NODE_DISTANCE
-MIN_ATTRACTIONS = 400
-MAX_ATTRACTIONS = 800
 
 CENTER_X = 200
 CENTER_Y = 200
@@ -76,11 +74,18 @@ class Vec2
 	normal: -> new Vec2 this.x / this.length(), this.y / this.length()
 
 class Crown
-	constructor: (@context, @x, @y) ->
+	constructor: (@context, @pointDensity, @x, @y) ->
+
+	numberOfPoints: ->
+		console.log this.area()
+		this.area() * this.pointDensity
+
+	makePoints: ->
+		(this.nextPoint() for i in [0...this.numberOfPoints()])
 
 class CircleCrown extends Crown
-	constructor: (context, x, y, @radius) ->
-		super(context, x, y)
+	constructor: (context, pointDensity, x, y, @radius) ->
+		super(context, pointDensity, x, y)
 
 	nextPoint: ->
 		r = Math.random() * this.radius
@@ -90,9 +95,12 @@ class CircleCrown extends Crown
 	draw: ->
 		drawCircle(this.context, this.x, this.y, this.radius, C_CROWN, 0.5, false)
 
+	area: ->
+		Math.PI * this.radius * this.radius
+
 class CardioidCrown extends Crown
-	constructor: (context, x, y, @a) ->
-		super(context, x, y)
+	constructor: (context, pointDensity, x, y, @a) ->
+		super(context, pointDensity, x, y)
 
 	makeSomePoint: ->
 		theta = Math.PI * 2 * Math.random()
@@ -109,6 +117,9 @@ class CardioidCrown extends Crown
 
 	draw: ->
 		drawCardiod this.context, this.x, this.y, this.a, C_CROWN, 0.5, false
+
+	area: ->
+		1.5 * Math.PI * this.a * this.a
 
 class Attraction
 	constructor: (@node, @point) ->
@@ -166,11 +177,12 @@ class TreeBuilder
 		#this.crown = new CircleCrown this.context, CENTER_X, CENTER_Y - 60, 120
 
 		crownHeight = parseInt($('#crown-height').val())
-		this.crown = new CircleCrown(this.context, CENTER_X, crownHeight, 100)
+		attractorDensity = parseFloat($('#attractor-density').val())
+		console.log attractorDensity
+		this.crown = new CircleCrown(this.context, attractorDensity, CENTER_X, crownHeight, 100)
 
 		this.attractors = []
-		for i in [0...(MIN_ATTRACTIONS + Math.floor(Math.random() * (MAX_ATTRACTIONS - MIN_ATTRACTIONS)))]
-			pos = this.crown.nextPoint()
+		for pos in this.crown.makePoints()
 			this.attractors.push new AttractionPoint(
 							this.context,
 							pos.x,
