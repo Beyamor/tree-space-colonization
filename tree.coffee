@@ -176,6 +176,8 @@ class TreeBuilder
 		for attractor in this.attractors
 			attractor.draw()
 
+		this.redraw()
+
 
 	findAttractions: ->
 		allAttractions = []
@@ -282,11 +284,22 @@ $().ready ->
 	canvas = $("#canvas")[0]
 	context = canvas.getContext('2d')
 
-	tb = new TreeBuilder context
+	iterator = null
+	tb = null
 
-	iterator = setInterval ->
-		tb.iterate()
-		if tb.isFinished
-			clearInterval iterator
-			tb.finish()
-	, 1000.0 / 20
+	newTree = ->
+
+		tb = new TreeBuilder context
+
+		iterator = setInterval ->
+			tb.iterate()
+			if tb.isFinished
+				clearInterval iterator
+				tb.finish()
+		, 1000.0 / 20
+
+	$('#generate-button').click ->
+		clearInterval iterator
+		newTree()
+
+	newTree()
