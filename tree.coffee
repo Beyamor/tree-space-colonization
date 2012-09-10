@@ -161,9 +161,12 @@ class TreeBuilder
 		this.maxIterations = 80
 
 		this.tree = new Tree this.context, CENTER_X, CENTER_Y + 100
-		this.crown = new CardioidCrown this.context, CENTER_X, CENTER_Y + 0, 100
+		#this.crown = new CardioidCrown this.context, CENTER_X, CENTER_Y + 0, 100
 		#this.crown = new CircleCrown this.context, CENTER_X, CENTER_Y - 40, 80
 		#this.crown = new CircleCrown this.context, CENTER_X, CENTER_Y - 60, 120
+
+		crownHeight = parseInt($('#crown-height').val())
+		this.crown = new CircleCrown(this.context, CENTER_X, crownHeight, 100)
 
 		this.attractors = []
 		for i in [0...(MIN_ATTRACTIONS + Math.floor(Math.random() * (MAX_ATTRACTIONS - MIN_ATTRACTIONS)))]
