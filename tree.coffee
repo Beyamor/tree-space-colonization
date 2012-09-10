@@ -1,8 +1,8 @@
 NODE_DISTANCE = 5
 ATTRACTION_RADIUS = 30
 KILL_DISTANCE = 4 * NODE_DISTANCE
-MIN_ATTRACTIONS = 500
-MAX_ATTRACTIONS = 900
+MIN_ATTRACTIONS = 400
+MAX_ATTRACTIONS = 800
 
 CENTER_X = 200
 CENTER_Y = 200
@@ -51,8 +51,8 @@ drawCardiod = (context, x, y, a, color=C_BLACK, alpha=1, filled=true) ->
 	context.globalAlpha = alpha
 	context.beginPath()
 	context.moveTo(x, y)
-	for i in [0...17]
-		thetai = i * Math.PI * 2 / 16
+	for i in [0...21]
+		thetai = i * Math.PI * 2 / 20
 		ri = cardioidRadius a, thetai
 		xi = x + ri * Math.cos thetai
 		yi = y + ri * Math.sin thetai
@@ -161,8 +161,9 @@ class TreeBuilder
 		this.maxIterations = 80
 
 		this.tree = new Tree this.context, CENTER_X, CENTER_Y + 100
-		#this.crown = new CardioidCrown this.context, CENTER_X, CENTER_Y + 30, 100
-		this.crown = new CircleCrown this.context, CENTER_X, CENTER_Y - 75, 125
+		this.crown = new CardioidCrown this.context, CENTER_X, CENTER_Y + 0, 100
+		#this.crown = new CircleCrown this.context, CENTER_X, CENTER_Y - 40, 80
+		#this.crown = new CircleCrown this.context, CENTER_X, CENTER_Y - 60, 120
 
 		this.attractors = []
 		for i in [0...(MIN_ATTRACTIONS + Math.floor(Math.random() * (MAX_ATTRACTIONS - MIN_ATTRACTIONS)))]
