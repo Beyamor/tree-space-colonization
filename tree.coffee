@@ -77,7 +77,6 @@ class Crown
 	constructor: (@context, @pointDensity, @x, @y) ->
 
 	numberOfPoints: ->
-		console.log this.area()
 		this.area() * this.pointDensity
 
 	makePoints: ->
@@ -176,7 +175,7 @@ class TreeBuilder
 		#this.crown = new CircleCrown this.context, CENTER_X, CENTER_Y - 40, 80
 		#this.crown = new CircleCrown this.context, CENTER_X, CENTER_Y - 60, 120
 
-		crownHeight = parseInt($('#crown-height').val())
+		crownHeight = 400 - parseInt($('#crown-height').val())
 		attractorDensity = parseFloat($('#attractor-density').val())
 		console.log attractorDensity
 		this.crown = new CircleCrown(this.context, attractorDensity, CENTER_X, crownHeight, 100)
