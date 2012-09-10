@@ -1,6 +1,5 @@
-NODE_DISTANCE = 5
 ATTRACTION_RADIUS = 30
-KILL_DISTANCE = 4 * NODE_DISTANCE
+KILL_DISTANCE = 4 * 5
 
 CENTER_X = 200
 CENTER_Y = 200
@@ -149,8 +148,8 @@ class TreeNode
 		drawPoint this.context, this.x, this.y, color=C_NODE
 
 class Tree
-	constructor: (@context, @x, @y) ->
-		this.nodes = (new TreeNode(this.context, this.x, this.y - i * NODE_DISTANCE) for i in [0...15])
+	constructor: (@context, @x, @y, @nodeDistance) ->
+		this.nodes = (new TreeNode(this.context, this.x, this.y - i * @nodeDistance) for i in [0...15])
 
 		for node in this.nodes
 			node.draw()
@@ -170,15 +169,17 @@ class TreeBuilder
 		this.iterations = 0
 		this.maxIterations = 80
 
-		this.tree = new Tree this.context, CENTER_X, CENTER_Y + 100
 		#this.crown = new CardioidCrown this.context, CENTER_X, CENTER_Y + 0, 100
 		#this.crown = new CircleCrown this.context, CENTER_X, CENTER_Y - 40, 80
 		#this.crown = new CircleCrown this.context, CENTER_X, CENTER_Y - 60, 120
 
+		nodeDistance = parseInt($('#node-distance').val())
 		crownHeight = 400 - parseInt($('#crown-height').val())
 		crownRadius = parseInt($('#crown-radius').val())
 		attractorDensity = parseFloat($('#attractor-density').val())
-		this.crown = new CircleCrown(this.context, attractorDensity, CENTER_X, crownHeight, crownRadius)
+
+		this.tree = new Tree this.context, CENTER_X, CENTER_Y + 100, nodeDistance
+		this.crown = new CircleCrown this.context, attractorDensity, CENTER_X, crownHeight, crownRadius
 
 		this.attractors = []
 		for pos in this.crown.makePoints()
@@ -222,8 +223,8 @@ class TreeBuilder
 		
 		n = (d.plus g).normal()
 
-		newX = node.x + NODE_DISTANCE * n.x
-		newY = node.y + NODE_DISTANCE * n.y
+		newX = node.x + this.tree.nodeDistance * n.x
+		newY = node.y + this.tree.nodeDistance * n.y
 
 		this.tree.addNode(newX, newY)
 
