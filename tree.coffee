@@ -1,4 +1,3 @@
-ATTRACTION_RADIUS = 30
 KILL_DISTANCE = 4 * 5
 
 CENTER_X = 200
@@ -123,7 +122,7 @@ class Attraction
 	constructor: (@node, @point) ->
 
 class AttractionPoint
-	constructor: (@context, @x, @y, @attractionRadius=ATTRACTION_RADIUS, @killDistance=KILL_DISTANCE) ->
+	constructor: (@context, @x, @y, @attractionRadius, @killDistance=KILL_DISTANCE) ->
 	draw: ->
 		drawCircle this.context, this.x, this.y, this.attractionRadius, color=C_ATTRACTION, alpha=0.2
 		drawCircle this.context, this.x, this.y, 3, color=C_ATTRACTOR
@@ -181,6 +180,7 @@ class TreeBuilder
 		crownHeight = 400 - parseInt($('#crown-height').val())
 		crownRadius = parseInt($('#crown-radius').val())
 		attractorDensity = parseFloat($('#attractor-density').val())
+		attractionRadius = parseFloat($('#attraction-radius').val())
 
 		this.tree = new Tree this.context, CENTER_X, CENTER_Y + 100, nodeDistance, initialHeight
 		this.crown = new CircleCrown this.context, attractorDensity, CENTER_X, crownHeight, crownRadius
@@ -190,7 +190,8 @@ class TreeBuilder
 			this.attractors.push new AttractionPoint(
 							this.context,
 							pos.x,
-							pos.y)
+							pos.y,
+							attractionRadius)
 
 		for attractor in this.attractors
 			attractor.draw()
