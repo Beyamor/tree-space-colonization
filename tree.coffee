@@ -24,10 +24,17 @@ fillContext = (context, color) ->
 	context.fillStyle = color
 	context.fill()
 
-strokeContext = (context, color, lineWidth=2) ->
+strokeContext = (context, color, lineWidth=2) -> # heh
 	context.lineWidth = 2
 	context.strokeStyle = color
 	context.stroke()
+
+drawLine = (context, x1, y1, x2, y2, color=C_BLACK, alpha=1, lineWidth=2) ->
+	context.globalAlpha = alpha
+	context.beginPath()
+	context.moveTo x1, y1
+	context.lineTo x2, y2
+	strokeContext context, color, lineWidth
 
 drawRect = (context, x, y, w, h, color=C_BLACK, alpha=1) ->
 	context.globalAlpha = alpha
@@ -141,24 +148,31 @@ class AttractionPoint
 
 class TreeNode
 	parent: null
-	constructor: (@context, @x, @y) ->
-	setParent: (@parent) ->
+	constructor: (@context, @x, @y, @parent) ->
+		@children = []
+		if this.parent
+			this.parent.children.push this
 	draw:  ->
 		drawPoint this.context, this.x, this.y, color=C_NODE
+		for child in this.children
+			drawLine this.context, this.x, this.y, child.x, child.y, color=C_NODE
 
 class Tree
+	previousNode: null
+
 	constructor: (@context, @x, @y, @nodeDistance, initialHeight) ->
 		this.nodes = []
 		this.startingHeight = 0
 		this.addInitialNode() until this.startingHeight > initialHeight
 
 	addInitialNode: ->
-		this.addNode this.x, this.y - this.startingHeight
+		this.addNode this.x, this.y - this.startingHeight, this.previousNode
 		this.startingHeight += this.nodeDistance
 
-	addNode: (x, y) ->
-		newNode = new TreeNode this.context, x, y
+	addNode: (x, y, parent) ->
+		newNode = new TreeNode this.context, x, y, parent
 		this.nodes.push(newNode)
+		this.previousNode = newNode
 		newNode.draw()
 
 	draw: ->
@@ -210,7 +224,7 @@ class TreeBuilder
 	attractionExistsFor: (attractions) ->
 		attractions.length > 0
 
-	growNode: (node, attractions) ->
+	growNode: (parentNode, attractions) ->
 		avgX = 0
 		avgY = 0
 
@@ -221,18 +235,18 @@ class TreeBuilder
 		avgX /= attractions.length
 		avgY /= attractions.length
 
-		dx = avgX - node.x
-		dy = avgY - node.y
+		dx = avgX - parentNode.x
+		dy = avgY - parentNode.y
 		d = new Vec2 dx, dy
 
 		g = new Vec2 0, 10 # bias upwards
 		
 		n = (d.plus g).normal()
 
-		newX = node.x + this.tree.nodeDistance * n.x
-		newY = node.y + this.tree.nodeDistance * n.y
+		newX = parentNode.x + this.tree.nodeDistance * n.x
+		newY = parentNode.y + this.tree.nodeDistance * n.y
 
-		this.tree.addNode(newX, newY)
+		this.tree.addNode newX, newY, parentNode
 
 	findClosestNode: (attractor) ->
 		closest = null
