@@ -26,7 +26,7 @@ fillContext = (context, color) ->
 	context.fill()
 
 strokeContext = (context, color, lineWidth=2) -> # heh
-	context.lineWidth = 2
+	context.lineWidth = lineWidth
 	context.strokeStyle = color
 	context.stroke()
 
@@ -162,6 +162,7 @@ class TreeNode
 
 class TreeStructure
 	previousNode: null
+	root: null
 
 	constructor: (@context, @x, @y, @nodeDistance, initialHeight) ->
 		@nodes = []
@@ -176,33 +177,75 @@ class TreeStructure
 		newNode = new TreeNode @context, x, y, parent
 		@nodes.push(newNode)
 		@previousNode = newNode
+		if not @root
+			@root = newNode
+
+	findLeafNodes: ->
+		(node for node in @nodes when node.children.length == 0)
 
 	draw: ->
 		for node in @nodes
 			node.draw()
 
 class TreeEdge
-	constructor: (@from, @to) ->
+	constructor: (@start, @end) ->
+
+class TreeBranch
+	constructor: (@start, @end) ->
+		weight: 0
+		childWeights: []
+
+	isLeaf: ->
+		@end.children.length == 0
 
 class Tree
 	constructor: (@context, @structure) ->
-		@findEdges()
+		@connectBranches()
+		@weightBranches()
 
-	findEdges: ->
-		@edges = []
-		for node in @structure.nodes
-			@addEdgesFromNode node
-	
-	addEdgesFromNode: (parent) ->
-		for child in parent.children
-			@addEdge parent, child
+	connectChildBranches: (branch) ->
+		start = branch.end
+		for end in start.children
+			newBranch = new TreeBranch start, end
+			@branches.push newBranch
+			@connectChildBranches newBranch
 
-	addEdge: (parent, child) ->
-		@edges.push new TreeEdge parent, child
+	findFirstBranch: ->
+		new TreeBranch @structure.root, @structure.root.children[0]
+
+	connectBranches: ->
+		@rootBranch = @findFirstBranch()
+		@branches = [@rootBranch]
+		@connectChildBranches @rootBranch
+
+	getBranchesByStart: (node) ->
+		(branch for branch in @branches when branch.start == node)
+
+	getChildBranches: (branch) ->
+		@getBranchesByStart branch.end
+
+	findWeight: (branch) ->
+		weight = 0
+
+		if branch.isLeaf()
+			weight = 1.0
+		else
+			n = 3.0
+			weight = 0
+			childBranches = @getChildBranches branch
+			for childBranch in childBranches
+				weight += Math.pow (@findWeight childBranch), n
+			weight = Math.pow weight, 1 / n
+
+		branch.weight = weight
+		return weight
+
+	weightBranches: ->
+		@findWeight @rootBranch
 
 	draw: ->
-		for edge in @edges
-			drawLine @context, edge.from.x, edge.from.y, edge.to.x, edge.to.y, C_TRUNK
+		for branch in @branches
+			drawLine @context, branch.start.x, branch.start.y, branch.end.x, branch.end.y, C_TRUNK, 1, branch.weight
 
 class TreeBuilder
 	constructor: (@context) ->
