@@ -74,33 +74,33 @@ distance = (p1, p2) -> Math.sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) *
 class Vec2
 	constructor: (@x, @y) ->
 
-	plus: (v) -> new Vec2 v.x + this.x, v.y + this.y
-	length: -> Math.sqrt this.x*this.x + this.y*this.y
-	normal: -> new Vec2 this.x / this.length(), this.y / this.length()
+	plus: (v) -> new Vec2 v.x + @x, v.y + @y
+	length: -> Math.sqrt @x*@x + @y*@y
+	normal: -> new Vec2 @x / @length(), @y / @length()
 
 class Crown
 	constructor: (@context, @pointDensity, @x, @y) ->
 
 	numberOfPoints: ->
-		this.area() * this.pointDensity
+		@area() * @pointDensity
 
 	makePoints: ->
-		(this.nextPoint() for i in [0...this.numberOfPoints()])
+		(@nextPoint() for i in [0...@numberOfPoints()])
 
 class CircleCrown extends Crown
 	constructor: (context, pointDensity, x, y, @radius) ->
 		super(context, pointDensity, x, y)
 
 	nextPoint: ->
-		r = Math.random() * this.radius
+		r = Math.random() * @radius
 		theta = Math.random() * Math.PI * 2
-		new Vec2 this.x + r * Math.cos(theta), this.y + r * Math.sin(theta)
+		new Vec2 @x + r * Math.cos(theta), @y + r * Math.sin(theta)
 
 	draw: ->
-		drawCircle(this.context, this.x, this.y, this.radius, C_CROWN, 0.5, false)
+		drawCircle(@context, @x, @y, @radius, C_CROWN, 0.5, false)
 
 	area: ->
-		Math.PI * this.radius * this.radius
+		Math.PI * @radius * @radius
 
 class CardioidCrown extends Crown
 	constructor: (context, pointDensity, x, y, @a) ->
@@ -108,22 +108,22 @@ class CardioidCrown extends Crown
 
 	makeSomePoint: ->
 		theta = Math.PI * 2 * Math.random()
-		r = this.a * 2 * Math.random()
-		new Vec2(this.x + r * Math.cos(theta), this.y + r * Math.sin(theta))
+		r = @a * 2 * Math.random()
+		new Vec2(@x + r * Math.cos(theta), @y + r * Math.sin(theta))
 
 	pointIsValid: (point) ->
-		inCardioid(this.x, this.y, this.a, point.x, point.y)
+		inCardioid(@x, @y, @a, point.x, point.y)
 
 	nextPoint: ->
-		point = this.makeSomePoint()
-		point = this.makeSomePoint() until this.pointIsValid(point)
+		point = @makeSomePoint()
+		point = @makeSomePoint() until @pointIsValid(point)
 		point
 
 	draw: ->
-		drawCardiod this.context, this.x, this.y, this.a, C_CROWN, 0.5, false
+		drawCardiod @context, @x, @y, @a, C_CROWN, 0.5, false
 
 	area: ->
-		1.5 * Math.PI * this.a * this.a
+		1.5 * Math.PI * @a * @a
 
 class Attraction
 	constructor: (@node, @point) ->
@@ -131,15 +131,15 @@ class Attraction
 class AttractionPoint
 	constructor: (@context, @x, @y, @attractionRadius, @killDistance) ->
 	draw: ->
-		drawCircle this.context, this.x, this.y, this.attractionRadius, color=C_ATTRACTION, alpha=0.2
-		drawCircle this.context, this.x, this.y, 3, color=C_ATTRACTOR
+		drawCircle @context, @x, @y, @attractionRadius, color=C_ATTRACTION, alpha=0.2
+		drawCircle @context, @x, @y, 3, color=C_ATTRACTOR
 	attraction: (nodes) ->
 		attraction = null
 		closest = null
 		
 		for node in nodes
-			if distance(node, this) < this.attractionRadius
-				if closest == null or distance(node, this) < distance(closest, this)
+			if distance(node, @ < @attractionRadius
+				if closest == null or distance(node, @ < distance(closest, @
 					closest = node
 
 		if closest
@@ -150,44 +150,44 @@ class TreeNode
 	parent: null
 	constructor: (@context, @x, @y, @parent) ->
 		@children = []
-		if this.parent
-			this.parent.children.push this
+		if @parent
+			@parent.children.push this
 	draw:  ->
-		drawPoint this.context, this.x, this.y, color=C_NODE
-		for child in this.children
-			drawLine this.context, this.x, this.y, child.x, child.y, color=C_NODE
+		drawPoint @context, @x, @y, color=C_NODE
+		for child in @children
+			drawLine @context, @x, @y, child.x, child.y, color=C_NODE
 
 class Tree
 	previousNode: null
 
 	constructor: (@context, @x, @y, @nodeDistance, initialHeight) ->
-		this.nodes = []
-		this.startingHeight = 0
-		this.addInitialNode() until this.startingHeight > initialHeight
+		@nodes = []
+		@startingHeight = 0
+		@addInitialNode() until @startingHeight > initialHeight
 
 	addInitialNode: ->
-		this.addNode this.x, this.y - this.startingHeight, this.previousNode
-		this.startingHeight += this.nodeDistance
+		@addNode @x, @y - @startingHeight, @previousNode
+		@startingHeight += @nodeDistance
 
 	addNode: (x, y, parent) ->
-		newNode = new TreeNode this.context, x, y, parent
-		this.nodes.push(newNode)
-		this.previousNode = newNode
+		newNode = new TreeNode @context, x, y, parent
+		@nodes.push(newNode)
+		@previousNode = newNode
 		newNode.draw()
 
 	draw: ->
-		for node in this.nodes
+		for node in @nodes
 			node.draw()
 
 class TreeBuilder
 	constructor: (@context) ->
-		this.isFinished = false
-		this.iterations = 0
-		this.maxIterations = 80
+		@isFinished = false
+		@iterations = 0
+		@maxIterations = 80
 
-		#this.crown = new CardioidCrown this.context, CENTER_X, CENTER_Y + 0, 100
-		#this.crown = new CircleCrown this.context, CENTER_X, CENTER_Y - 40, 80
-		#this.crown = new CircleCrown this.context, CENTER_X, CENTER_Y - 60, 120
+		#@crown = new CardioidCrown @context, CENTER_X, CENTER_Y + 0, 100
+		#@crown = new CircleCrown @context, CENTER_X, CENTER_Y - 40, 80
+		#@crown = new CircleCrown @context, CENTER_X, CENTER_Y - 60, 120
 
 		nodeDistance = parseInt($('#node-distance').val())
 		initialHeight = parseInt($('#initial-height').val())
@@ -197,27 +197,27 @@ class TreeBuilder
 		attractionRadius = parseFloat($('#attraction-radius').val())
 		killDistance = parseFloat($('#kill-distance').val())
 
-		this.tree = new Tree this.context, CENTER_X, CENTER_Y + 100, nodeDistance, initialHeight
-		this.crown = new CircleCrown this.context, attractorDensity, CENTER_X, crownHeight, crownRadius
+		@tree = new Tree @context, CENTER_X, CENTER_Y + 100, nodeDistance, initialHeight
+		@crown = new CircleCrown @context, attractorDensity, CENTER_X, crownHeight, crownRadius
 
-		this.attractors = []
-		for pos in this.crown.makePoints()
-			this.attractors.push new AttractionPoint this.context,
+		@attractors = []
+		for pos in @crown.makePoints()
+			@attractors.push new AttractionPoint @context,
 								pos.x,
 								pos.y,
 								attractionRadius,
 								killDistance
 
-		for attractor in this.attractors
+		for attractor in @attractors
 			attractor.draw()
 
-		this.redraw()
+		@redraw()
 
 
 	findAttractions: ->
 		allAttractions = []
-		for attractor in this.attractors
-			attraction = attractor.attraction(this.tree.nodes)
+		for attractor in @attractors
+			attraction = attractor.attraction(@tree.nodes)
 			allAttractions.push attraction if attraction
 		return allAttractions
 
@@ -243,14 +243,14 @@ class TreeBuilder
 		
 		n = (d.plus g).normal()
 
-		newX = parentNode.x + this.tree.nodeDistance * n.x
-		newY = parentNode.y + this.tree.nodeDistance * n.y
+		newX = parentNode.x + @tree.nodeDistance * n.x
+		newY = parentNode.y + @tree.nodeDistance * n.y
 
-		this.tree.addNode newX, newY, parentNode
+		@tree.addNode newX, newY, parentNode
 
 	findClosestNode: (attractor) ->
 		closest = null
-		for node in this.tree.nodes
+		for node in @tree.nodes
 			if not closest or distance(node, attractor) < distance(closest, attractor)
 				closest = node
 		closest
@@ -258,8 +258,8 @@ class TreeBuilder
 	findAttractorsToRemove: ->
 		attractors = []
 
-		for attractor in this.attractors
-			closest =  this.findClosestNode attractor
+		for attractor in @attractors
+			closest =  @findClosestNode attractor
 
 			if distance(closest, attractor) < attractor.killDistance
 				attractors.push attractor
@@ -269,8 +269,8 @@ class TreeBuilder
 	noAttractorsAreReachable: ->
 		reachable = false
 
-		for attractor in this.attractors
-			closest = this.findClosestNode attractor
+		for attractor in @attractors
+			closest = @findClosestNode attractor
 
 			if distance(closest, attractor) <= attractor.attractionRadius
 				reachable = true
@@ -278,40 +278,40 @@ class TreeBuilder
 		return not reachable
 
 	removeReachedAttractors: ->
-		attractorsToRemove = this.findAttractorsToRemove()
-		this.attractors = (attractor for attractor in this.attractors when attractor not in attractorsToRemove)
+		attractorsToRemove = @findAttractorsToRemove()
+		@attractors = (attractor for attractor in @attractors when attractor not in attractorsToRemove)
 
 	iterate: ->
-		++this.iterations
-		if not this.isFinished
-			this.isFinished = this.noAttractorsAreReachable()
-		if not this.isFinished and this.iterations > this.maxIterations
-			this.isFinished = true
+		++@iterations
+		if not @isFinished
+			@isFinished = @noAttractorsAreReachable()
+		if not @isFinished and @iterations > @maxIterations
+			@isFinished = true
 
-		allAttractions = this.findAttractions()
+		allAttractions = @findAttractions()
 
-		for node in this.tree.nodes
+		for node in @tree.nodes
 			nodeAttractions =  (attraction for attraction in allAttractions when attraction.node == node)
-			if this.attractionExistsFor nodeAttractions
-				this.growNode node, nodeAttractions
+			if @attractionExistsFor nodeAttractions
+				@growNode node, nodeAttractions
 
-		this.removeReachedAttractors()
-		this.redraw()
+		@removeReachedAttractors()
+		@redraw()
 
 	removeAllAttractors: ->
-		this.attractors = []
+		@attractors = []
 
 	finish: ->
 		console.log "finished!"
-		this.removeAllAttractors()
-		this.redraw()
+		@removeAllAttractors()
+		@redraw()
 
 	redraw: ->
-		drawRect this.context, 0, 0, 400, 400, C_BACKGROUND
-		this.crown.draw()
-		for attractor in this.attractors
+		drawRect @context, 0, 0, 400, 400, C_BACKGROUND
+		@crown.draw()
+		for attractor in @attractors
 			attractor.draw()
-		this.tree.draw()
+		@tree.draw()
 
 $().ready ->
 	console.log "give 'er"
