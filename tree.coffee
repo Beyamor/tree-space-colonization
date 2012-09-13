@@ -70,6 +70,9 @@ drawCardiod = (context, x, y, a, color=C_BLACK, alpha=1, filled=true) ->
 drawPoint = (context, x, y, color=C_BLACK) ->
 	drawCircle(context, x, y, 2, color)
 
+clearCanvas = (canvas) ->
+	drawRect canvas, 0, 0, 400, 400, "#fff"
+
 distance = (p1, p2) -> Math.sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y))
 
 class Vec2
@@ -406,6 +409,7 @@ $().ready ->
 		, 1000.0 / 20
 		"""
 
+		clearCanvas context
 		tb.iterate() until tb.isFinished()
 		tree = tb.buildTree()
 		tree.draw()
