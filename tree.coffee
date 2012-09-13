@@ -159,7 +159,7 @@ class TreeNode
 		for child in @children
 			drawLine @context, @x, @y, child.x, child.y, color=C_NODE
 
-class Tree
+class TreeStructure
 	previousNode: null
 
 	constructor: (@context, @x, @y, @nodeDistance, initialHeight) ->
@@ -190,15 +190,15 @@ class TreeBuilder
 		#@crown = new CircleCrown @context, CENTER_X, CENTER_Y - 40, 80
 		#@crown = new CircleCrown @context, CENTER_X, CENTER_Y - 60, 120
 
-		nodeDistance = parseInt($('#node-distance').val())
-		initialHeight = parseInt($('#initial-height').val())
-		crownHeight = 400 - parseInt($('#crown-height').val())
-		crownRadius = parseInt($('#crown-radius').val())
-		attractorDensity = parseFloat($('#attractor-density').val())
-		attractionRadius = parseFloat($('#attraction-radius').val())
-		killDistance = parseFloat($('#kill-distance').val())
+		nodeDistance = parseInt $('#node-distance').val()
+		initialHeight = parseInt $('#initial-height').val()
+		crownHeight = 400 - parseInt $('#crown-height').val()
+		crownRadius = parseInt $('#crown-radius').val()
+		attractorDensity = parseFloat $('#attractor-density').val()
+		attractionRadius = parseFloat $('#attraction-radius').val()
+		killDistance = parseFloat $('#kill-distance').val()
 
-		@tree = new Tree @context, CENTER_X, CENTER_Y + 100, nodeDistance, initialHeight
+		@tree = new TreeStructure @context, CENTER_X, CENTER_Y + 100, nodeDistance, initialHeight
 		@crown = new CircleCrown @context, attractorDensity, CENTER_X, crownHeight, crownRadius
 
 		@attractors = []
