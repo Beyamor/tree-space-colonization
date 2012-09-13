@@ -9,6 +9,7 @@ C_NODE = C_BLACK
 C_ATTRACTOR = "#FAAFBE"
 C_ATTRACTION = "#38ACEC"
 C_CROWN = "#E9AB17"
+C_TRUNK = "#810541"
 
 cardioidRadius = (a, theta) ->
 	a * (1 - Math.sin theta)
@@ -175,11 +176,33 @@ class TreeStructure
 		newNode = new TreeNode @context, x, y, parent
 		@nodes.push(newNode)
 		@previousNode = newNode
-		newNode.draw()
 
 	draw: ->
 		for node in @nodes
 			node.draw()
+
+class TreeEdge
+	constructor: (@from, @to) ->
+
+class Tree
+	constructor: (@context, @structure) ->
+		@findEdges()
+
+	findEdges: ->
+		@edges = []
+		for node in @structure.nodes
+			@addEdgesFromNode node
+	
+	addEdgesFromNode: (parent) ->
+		for child in parent.children
+			@addEdge parent, child
+
+	addEdge: (parent, child) ->
+		@edges.push new TreeEdge parent, child
+
+	draw: ->
+		for edge in @edges
+			drawLine @context, edge.from.x, edge.from.y, edge.to.x, edge.to.y, C_TRUNK
 
 class TreeBuilder
 	constructor: (@context) ->
@@ -198,7 +221,7 @@ class TreeBuilder
 		attractionRadius = parseFloat $('#attraction-radius').val()
 		killDistance = parseFloat $('#kill-distance').val()
 
-		@tree = new TreeStructure @context, CENTER_X, CENTER_Y + 100, nodeDistance, initialHeight
+		@structure = new TreeStructure @context, CENTER_X, CENTER_Y + 100, nodeDistance, initialHeight
 		@crown = new CircleCrown @context, attractorDensity, CENTER_X, crownHeight, crownRadius
 
 		@attractors = []
@@ -209,16 +232,16 @@ class TreeBuilder
 								attractionRadius,
 								killDistance
 
-		for attractor in @attractors
-			attractor.draw()
+		#for attractor in @attractors
+			#attractor.draw()
 
-		@redraw()
+		#@redraw()
 
 
 	findAttractions: ->
 		allAttractions = []
 		for attractor in @attractors
-			attraction = attractor.attraction(@tree.nodes)
+			attraction = attractor.attraction(@structure.nodes)
 			allAttractions.push attraction if attraction
 		return allAttractions
 
@@ -244,14 +267,14 @@ class TreeBuilder
 		
 		n = (d.plus g).normal()
 
-		newX = parentNode.x + @tree.nodeDistance * n.x
-		newY = parentNode.y + @tree.nodeDistance * n.y
+		newX = parentNode.x + @structure.nodeDistance * n.x
+		newY = parentNode.y + @structure.nodeDistance * n.y
 
-		@tree.addNode newX, newY, parentNode
+		@structure.addNode newX, newY, parentNode
 
 	findClosestNode: (attractor) ->
 		closest = null
-		for node in @tree.nodes
+		for node in @structure.nodes
 			if not closest or distance(node, attractor) < distance(closest, attractor)
 				closest = node
 		closest
@@ -292,28 +315,31 @@ class TreeBuilder
 
 		allAttractions = @findAttractions()
 
-		for node in @tree.nodes
+		for node in @structure.nodes
 			nodeAttractions =  (attraction for attraction in allAttractions when attraction.node == node)
 			if @attractionExistsFor nodeAttractions
 				@growNode node, nodeAttractions
 
 		@removeReachedAttractors()
-		@redraw()
+		#@redraw()
 
 	removeAllAttractors: ->
 		@attractors = []
 
-	finish: ->
+	finalDraw: ->
 		console.log "finished!"
 		@removeAllAttractors()
-		@redraw()
+		#@redraw()
+
+	buildTree: ->
+		(@tree = new Tree @context, @structure) if @isFinished()
 
 	redraw: ->
 		drawRect @context, 0, 0, 400, 400, C_BACKGROUND
 		@crown.draw()
 		for attractor in @attractors
 			attractor.draw()
-		@tree.draw()
+		@structure.draw()
 
 $().ready ->
 	console.log "give 'er"
@@ -328,12 +354,18 @@ $().ready ->
 
 		tb = new TreeBuilder context
 
+		"""
 		iterator = setInterval ->
 			tb.iterate()
 			if tb.isFinished()
 				clearInterval iterator
 				tb.finish()
 		, 1000.0 / 20
+		"""
+
+		tb.iterate() until tb.isFinished()
+		tree = tb.buildTree()
+		tree.draw()
 
 	$('#generate-button').click ->
 		clearInterval iterator
