@@ -130,16 +130,18 @@ class Attraction
 
 class AttractionPoint
 	constructor: (@context, @x, @y, @attractionRadius, @killDistance) ->
+
 	draw: ->
 		drawCircle @context, @x, @y, @attractionRadius, color=C_ATTRACTION, alpha=0.2
 		drawCircle @context, @x, @y, 3, color=C_ATTRACTOR
+
 	attraction: (nodes) ->
 		attraction = null
 		closest = null
 		
 		for node in nodes
-			if distance(node, @ < @attractionRadius
-				if closest == null or distance(node, @ < distance(closest, @
+			if distance(node, this) < @attractionRadius
+				if closest == null or distance(node, this) < distance(closest, this)
 					closest = node
 
 		if closest
@@ -147,11 +149,11 @@ class AttractionPoint
 		attraction
 
 class TreeNode
-	parent: null
 	constructor: (@context, @x, @y, @parent) ->
 		@children = []
 		if @parent
 			@parent.children.push this
+
 	draw:  ->
 		drawPoint @context, @x, @y, color=C_NODE
 		for child in @children
@@ -181,7 +183,6 @@ class Tree
 
 class TreeBuilder
 	constructor: (@context) ->
-		@isFinished = false
 		@iterations = 0
 		@maxIterations = 80
 
@@ -281,12 +282,13 @@ class TreeBuilder
 		attractorsToRemove = @findAttractorsToRemove()
 		@attractors = (attractor for attractor in @attractors when attractor not in attractorsToRemove)
 
+	isFinished: ->
+		@iterations > @maxIterations or @noAttractorsAreReachable()
+
 	iterate: ->
+		if @isFinished()
+			return
 		++@iterations
-		if not @isFinished
-			@isFinished = @noAttractorsAreReachable()
-		if not @isFinished and @iterations > @maxIterations
-			@isFinished = true
 
 		allAttractions = @findAttractions()
 
@@ -328,7 +330,7 @@ $().ready ->
 
 		iterator = setInterval ->
 			tb.iterate()
-			if tb.isFinished
+			if tb.isFinished()
 				clearInterval iterator
 				tb.finish()
 		, 1000.0 / 20
