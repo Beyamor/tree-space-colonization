@@ -195,8 +195,9 @@ class TreeEdge
 
 class TreeBranch
 	constructor: (@start, @end) ->
-		weight: 0
-		childWeights: []
+		@weight = 0
+		@childWeights = []
+		@isBeingDrawn = false
 
 	isLeaf: ->
 		@end.children.length == 0
@@ -205,6 +206,8 @@ class Tree
 	constructor: (@context, @structure) ->
 		@connectBranches()
 		@weightBranches()
+		@branchesToDraw = []
+		@allBranchesAreBeingDrawn = false
 
 	connectChildBranches: (branch) ->
 		start = branch.end
@@ -233,7 +236,7 @@ class Tree
 		if branch.isLeaf()
 			weight = 1.0
 		else
-			n = 3.0
+			n = 4.0
 			weight = 0
 			childBranches = @getChildBranches branch
 			for childBranch in childBranches
@@ -246,9 +249,32 @@ class Tree
 	weightBranches: ->
 		@findWeight @rootBranch
 
+	includeNextSetOfBranchesToDraw: ->
+		if @branchesToDraw.length == 0
+			firstBranch = @findFirstBranch()
+			firstBranch.isBeingDrawn = true
+			@branchesToDraw.push firstBranch
+		else
+			branchesToAdd = []
+			for branch in @branchesToDraw
+				childBranches = @getChildBranches(branch)
+				for childBranch in childBranches
+					if not childBranch.isBeingDrawn
+						branchesToAdd.push childBranch
+
+			for branch in branchesToAdd
+				branch.isBeingDrawn = true
+				@branchesToDraw.push branch
+
+			if branchesToAdd.length == 0
+				@allBranchesAreBeingDrawn = true
+
 	draw: ->
-		for branch in @branches
+		for branch in @branchesToDraw
 			drawLine @context, branch.start.x, branch.start.y, branch.end.x, branch.end.y, C_TRUNK, 1, branch.weight
+
+		if not @allBranchesAreBeingDrawn
+			@includeNextSetOfBranchesToDraw()
 
 class TreeBuilder
 	constructor: (@context) ->
@@ -412,7 +438,11 @@ $().ready ->
 		clearCanvas context
 		tb.iterate() until tb.isFinished()
 		tree = tb.buildTree()
-		tree.draw()
+
+		iterator = setInterval ->
+			clearCanvas context
+			tree.draw()
+		, 1000.0 / 20
 
 	$('#generate-button').click ->
 		clearInterval iterator
