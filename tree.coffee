@@ -435,7 +435,6 @@ $().ready ->
 		, 1000.0 / 20
 		"""
 
-		clearCanvas context
 		tb.iterate() until tb.isFinished()
 		tree = tb.buildTree()
 
