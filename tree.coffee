@@ -1,5 +1,3 @@
-KILL_DISTANCE = 4 * 5
-
 CENTER_X = 200
 CENTER_Y = 200
 
@@ -236,13 +234,6 @@ class TreeBranch
 
 		drawQuad @context, p1, p2, p3, p4, C_TRUNK
 		
-		"""
-		drawCircle @context, p1.x, p1.y, 1, C_DEBUG
-		drawCircle @context, p2.x, p2.y, 1, C_DEBUG
-		drawCircle @context, p3.x, p3.y, 1, C_DEBUG
-		drawCircle @context, p4.x, p4.y, 1, C_DEBUG
-		"""
-
 class Tree
 	constructor: (@context, @structure) ->
 		@connectBranches()
@@ -277,7 +268,7 @@ class Tree
 		if branch.isLeaf()
 			weight = 1
 		else
-			n = 4.0
+			n = 4
 			weight = 0
 			childBranches = @getChildBranches branch
 			for childBranch in childBranches
@@ -467,15 +458,6 @@ $().ready ->
 	newTree = ->
 
 		tb = new TreeBuilder context
-
-		"""
-		iterator = setInterval ->
-			tb.iterate()
-			if tb.isFinished()
-				clearInterval iterator
-				tb.finish()
-		, 1000.0 / 20
-		"""
 
 		tb.iterate() until tb.isFinished()
 		tree = tb.buildTree()
