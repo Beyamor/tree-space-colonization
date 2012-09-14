@@ -7,7 +7,7 @@ C_NODE = C_BLACK
 C_ATTRACTOR = "#FAAFBE"
 C_ATTRACTION = "#38ACEC"
 C_CROWN = "#E9AB17"
-C_TRUNK = "#810541"
+C_TRUNK = C_BLACK
 C_DEBUG = "#52D017"
 
 cardioidRadius = (a, theta) ->
@@ -29,6 +29,12 @@ strokeContext = (context, color, lineWidth=2) -> # heh
 	context.strokeStyle = color
 	context.stroke()
 
+fillOrStroke = (context, color, fill) ->
+	if fill
+		fillContext context, color
+	else
+		strokeContext context, color
+
 drawLine = (context, x1, y1, x2, y2, color=C_BLACK, alpha=1, lineWidth=2) ->
 	context.globalAlpha = alpha
 	context.beginPath()
@@ -45,10 +51,7 @@ drawCircle = (context, x, y, radius, color=C_BLACK, alpha=1, filled=true) ->
 	context.globalAlpha = alpha
 	context.beginPath()
 	context.arc(x, y, radius, 0, 2 * Math.PI, false)
-	if filled
-		fillContext(context, color)
-	else
-		strokeContext(context, color)
+	fillOrStroke context, color, filled
 
 drawCardiod = (context, x, y, a, color=C_BLACK, alpha=1, filled=true) ->
 	context.globalAlpha = alpha
@@ -61,10 +64,7 @@ drawCardiod = (context, x, y, a, color=C_BLACK, alpha=1, filled=true) ->
 		yi = y + ri * Math.sin thetai
 		context.moveTo xi, yi if i is 0
 		context.lineTo xi, yi
-	if filled
-		fillContext context, color
-	else
-		strokeContext context, color
+	fillOrStroke context, color, filled
 
 drawQuad = (context, p1, p2, p3, p4, color=C_BLACK, alpha=1, filled=true) ->
 	context.globalAlpha = alpha
@@ -73,13 +73,9 @@ drawQuad = (context, p1, p2, p3, p4, color=C_BLACK, alpha=1, filled=true) ->
 	context.lineTo p2.x, p2.y
 	context.lineTo p3.x, p3.y
 	context.lineTo p4.x, p4.y
-	context.lineTo p1.x, p1.y
 	context.closePath()
 
-	if filled
-		fillContext context, color
-	else
-		strokeContext context, color
+	fillOrStroke context, color, filled
 
 drawPoint = (context, x, y, color=C_BLACK) ->
 	drawCircle(context, x, y, 2, color)
@@ -268,7 +264,7 @@ class Tree
 		if branch.isLeaf()
 			weight = 1
 		else
-			n = 4
+			n = 2.5
 			weight = 0
 			childBranches = @getChildBranches branch
 			for childBranch in childBranches
