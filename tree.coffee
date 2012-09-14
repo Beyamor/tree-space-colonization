@@ -10,6 +10,7 @@ C_ATTRACTOR = "#FAAFBE"
 C_ATTRACTION = "#38ACEC"
 C_CROWN = "#E9AB17"
 C_TRUNK = "#810541"
+C_DEBUG = "#52D017"
 
 cardioidRadius = (a, theta) ->
 	a * (1 - Math.sin theta)
@@ -62,6 +63,21 @@ drawCardiod = (context, x, y, a, color=C_BLACK, alpha=1, filled=true) ->
 		yi = y + ri * Math.sin thetai
 		context.moveTo xi, yi if i is 0
 		context.lineTo xi, yi
+	if filled
+		fillContext context, color
+	else
+		strokeContext context, color
+
+drawQuad = (context, p1, p2, p3, p4, color=C_BLACK, alpha=1, filled=true) ->
+	context.globalAlpha = alpha
+	context.beginPath()
+	context.moveTo p1.x, p1.y
+	context.lineTo p2.x, p2.y
+	context.lineTo p3.x, p3.y
+	context.lineTo p4.x, p4.y
+	context.lineTo p1.x, p1.y
+	context.closePath()
+
 	if filled
 		fillContext context, color
 	else
@@ -194,13 +210,38 @@ class TreeEdge
 	constructor: (@start, @end) ->
 
 class TreeBranch
-	constructor: (@start, @end) ->
+	constructor: (@context, @parentBranch, @start, @end) ->
 		@weight = 0
 		@childWeights = []
 		@isBeingDrawn = false
 
 	isLeaf: ->
 		@end.children.length == 0
+
+	draw: ->
+		startWeight = if @parentBranch then @parentBranch.weight else @weight
+		endWeight = @weight
+
+		drawCircle @context, @start.x, @start.y, startWeight, C_TRUNK
+		drawCircle @context, @end.x, @end.y, endWeight, C_TRUNK
+
+		theta = Math.atan2 @end.y - @start.y, @end.x - @start.x
+		thetaLeft = theta + Math.PI / 2
+		thetaRight = theta - Math.PI / 2
+
+		p1 = new Vec2 @start.x + Math.cos(thetaLeft) * startWeight, @start.y + Math.sin(thetaLeft) * startWeight
+		p2 = new Vec2 @start.x + Math.cos(thetaRight) * startWeight, @start.y + Math.sin(thetaRight) * startWeight
+		p3 = new Vec2 @end.x + Math.cos(thetaRight) * endWeight, @end.y + Math.sin(thetaRight) * endWeight
+		p4 = new Vec2 @end.x + Math.cos(thetaLeft) * endWeight, @end.y + Math.sin(thetaLeft) * endWeight
+
+		drawQuad @context, p1, p2, p3, p4, C_TRUNK
+		
+		"""
+		drawCircle @context, p1.x, p1.y, 1, C_DEBUG
+		drawCircle @context, p2.x, p2.y, 1, C_DEBUG
+		drawCircle @context, p3.x, p3.y, 1, C_DEBUG
+		drawCircle @context, p4.x, p4.y, 1, C_DEBUG
+		"""
 
 class Tree
 	constructor: (@context, @structure) ->
@@ -212,12 +253,12 @@ class Tree
 	connectChildBranches: (branch) ->
 		start = branch.end
 		for end in start.children
-			newBranch = new TreeBranch start, end
+			newBranch = new TreeBranch @context, branch, start, end
 			@branches.push newBranch
 			@connectChildBranches newBranch
 
 	findFirstBranch: ->
-		new TreeBranch @structure.root, @structure.root.children[0]
+		new TreeBranch @context, null, @structure.root, @structure.root.children[0]
 
 	connectBranches: ->
 		@rootBranch = @findFirstBranch()
@@ -234,7 +275,7 @@ class Tree
 		weight = 0
 
 		if branch.isLeaf()
-			weight = 1.0
+			weight = 1
 		else
 			n = 4.0
 			weight = 0
@@ -271,7 +312,8 @@ class Tree
 
 	draw: ->
 		for branch in @branchesToDraw
-			drawLine @context, branch.start.x, branch.start.y, branch.end.x, branch.end.y, C_TRUNK, 1, branch.weight
+			branch.draw()
+			#drawLine @context, branch.start.x, branch.start.y, branch.end.x, branch.end.y, C_TRUNK, 1, branch.weight
 
 		if not @allBranchesAreBeingDrawn
 			@includeNextSetOfBranchesToDraw()
