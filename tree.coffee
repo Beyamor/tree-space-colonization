@@ -20,6 +20,8 @@ inCardioid = (cx, cy, a, x, y) ->
 	theta = Math.atan2(dy, dx)
 	r <= cardioidRadius(a, theta)
 
+distance = (p1, p2) -> Math.sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y))
+
 class GraphicsContext
 	constructor: (@context) ->
 
@@ -86,8 +88,6 @@ class GraphicsContext
 
 	clear: ->
 		@drawRect 0, 0, 400, 400, "#fff"
-
-distance = (p1, p2) -> Math.sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y))
 
 class Vec2
 	constructor: (@x, @y) ->
@@ -172,9 +172,6 @@ class TreeNode
 		if @parent
 			@parent.children.push this
 
-	draw:  ->
-		@context.drawPoint @x, @y, color=C_NODE
-
 class TreeStructure
 	previousNode: null
 	root: null
@@ -197,10 +194,6 @@ class TreeStructure
 
 	findLeafNodes: ->
 		(node for node in @nodes when node.children.length == 0)
-
-	draw: ->
-		for node in @nodes
-			node.draw()
 
 class TreeEdge
 	constructor: (@start, @end) ->
@@ -335,12 +328,6 @@ class TreeBuilder
 								attractionRadius,
 								killDistance
 
-		#for attractor in @attractors
-			#attractor.draw()
-
-		#@redraw()
-
-
 	findAttractions: ->
 		allAttractions = []
 		for attractor in @attractors
@@ -424,7 +411,6 @@ class TreeBuilder
 				@growNode node, nodeAttractions
 
 		@removeReachedAttractors()
-		#@redraw()
 
 	removeAllAttractors: ->
 		@attractors = []
@@ -432,17 +418,9 @@ class TreeBuilder
 	finalDraw: ->
 		console.log "finished!"
 		@removeAllAttractors()
-		#@redraw()
 
 	buildTree: ->
 		(@tree = new Tree @context, @structure) if @isFinished()
-
-	redraw: ->
-		drawRect @context, 0, 0, 400, 400, C_BACKGROUND
-		@crown.draw()
-		for attractor in @attractors
-			attractor.draw()
-		@structure.draw()
 
 $().ready ->
 	console.log "give 'er"
