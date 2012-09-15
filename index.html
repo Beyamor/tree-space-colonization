@@ -6,21 +6,26 @@
 		<script type="text/coffeescript" src="tree.coffee"></script>
 	</head>
 	<body>
-		<canvas id="canvas" width="400" height="400">
-			<p>Hey, dork, get a browser that supports canvas.</p>
-		</canvas>
-		<div><button id="generate-button" type="button">New tree</button></div>
-		<div>Initial height: <input id="initial-height" type="range" min="0" max="200" step="5" value="75"/></div>
-		<div>Node separation: <input id="node-distance" type="range" min="1" max="15" step="1" value="5"/></div>
-		<div>Crown type: <select id="crown-selector">
-				<option value="circle">Circle</option>
-				<option value="cardioid">Cardiod</option>
-				<option value="toroid">Toroid</option>
-		</select></div>
-		<div id="crown-controls">
+		<div style="display: inline-block; vertical-align: top;">
+			<canvas id="canvas" width="400" height="400">
+				<p>Hey, dork, get a browser that supports canvas.</p>
+			</canvas>
 		</div>
-		<div>Attractor density: <input id="attractor-density" type="range" min="0" max="0.03" step="0.0005" value="0.015"/></div>
-		<div>Attraction radius: <input id="attraction-radius" type="range" min="20" max="60" step="1" value="30"/></div>
-		<div>Kill distance: <input id="kill-distance" type="range" min="5" max="30" step="1" value="20"/></div>
+		<div style="display: inline-block; vertical-align: top;">
+			<div><button id="generate-button" type="button">New tree</button></div>
+			<div>Initial height: <input id="initial-height" type="range" min="0" max="200" step="5" value="75"/></div>
+			<div>Node separation: <input id="node-distance" type="range" min="1" max="15" step="1" value="5"/></div>
+			<div>Vertical bias: <input id="vertical-bias" type="range" min="-20" max="20" step="1" value="10"/></div>
+			<div>Crown type: <select id="crown-selector">
+					<option value="circle">Circle</option>
+					<option value="cardioid">Cardiod</option>
+					<option value="toroid">Toroid</option>
+			</select></div>
+			<div id="crown-controls">
+			</div>
+			<div>Attractor density: <input id="attractor-density" type="range" min="0" max="0.03" step="0.0005" value="0.015"/></div>
+			<div>Attraction radius: <input id="attraction-radius" type="range" min="20" max="60" step="1" value="30"/></div>
+			<div>Kill distance: <input id="kill-distance" type="range" min="5" max="30" step="1" value="20"/></div>
+		</div>
 	</body>
 </html>

@@ -434,6 +434,7 @@ class TreeBuilder
 		attractorDensity = parseFloat $('#attractor-density').val()
 		attractionRadius = parseFloat $('#attraction-radius').val()
 		killDistance = parseFloat $('#kill-distance').val()
+		@verticalBias = parseFloat $('#vertical-bias').val()
 
 		@structure = new TreeStructure @context, CENTER_X, CENTER_Y + 100, nodeDistance, initialHeight
 		@crown = crownSelector.getCrown()
@@ -471,7 +472,7 @@ class TreeBuilder
 		dy = avgY - parentNode.y
 		d = new Vec2 dx, dy
 
-		g = new Vec2 0, 10 # bias upwards
+		g = new Vec2 0, @verticalBias
 		
 		n = (d.plus g).normal()
 
