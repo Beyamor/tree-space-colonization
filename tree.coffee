@@ -58,7 +58,7 @@ class GraphicsContext
 		@context.arc(x, y, radius, 0, 2 * Math.PI, false)
 		@fillOrStroke color, filled
 
-	drawCardiod: (x, y, a, color=C_BLACK, alpha=1, filled=true) ->
+	drawCardioid: (x, y, a, color=C_BLACK, alpha=1, filled=true) ->
 		@context.globalAlpha = alpha
 		@context.beginPath()
 		@context.moveTo(x, y)
@@ -169,7 +169,6 @@ class CardioidCrown extends Crown
 
 class CrownSelector
 	constructor: (@context) ->
-		@crown = new CircleCrown @context, 0.015, CENTER_X, @crownStartY(), 100
 		@isShowing = false
 		@stopShowingTimer = 0
 		@stopShowingPeriod = 20
@@ -180,7 +179,11 @@ class CrownSelector
 		@shownAlpha = 0.6
 		@hidAlpha = 0.0
 
-		@makeCrownControls()
+		$('#crown-selector').change( (e) =>
+			@newSelectedCrown()
+		)
+		@newSelectedCrown()
+		
 
 	crownStartY: ->
 		if $('#crown-height').length != 0 then $('#crown-height').val() else 140
@@ -198,6 +201,21 @@ class CrownSelector
 				@isShowing = true
 				@stopShowingTimer = @stopShowingPeriod
 		)
+
+	getCrownSelection: ->
+		$('#crown-selector').val()
+
+	newSelectedCrown: ->
+		switch @getCrownSelection()
+			when 'circle'
+				@crown = new CircleCrown @context, 0.015, CENTER_X, @crownStartY()
+			when 'cardioid'
+				@crown = new CardioidCrown @context, 0.015, CENTER_X, @crownStartY()
+			else
+				alert 'whoa, unhandled crown'
+
+		@makeCrownControls()
+		@adjustForControls()
 
 	update: ->
 		@alpha += @fadeIn if @alpha < @shownAlpha and @isShowing
