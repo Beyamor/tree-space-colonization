@@ -20,68 +20,72 @@ inCardioid = (cx, cy, a, x, y) ->
 	theta = Math.atan2(dy, dx)
 	r <= cardioidRadius(a, theta)
 
-fillContext = (context, color) ->
-	context.fillStyle = color
-	context.fill()
+class GraphicsContext
+	constructor: (@context) ->
 
-strokeContext = (context, color, lineWidth=2) -> # heh
-	context.lineWidth = lineWidth
-	context.strokeStyle = color
-	context.stroke()
+	fillContext: (color) ->
+		@context.fillStyle = color
+		@context.fill()
 
-fillOrStroke = (context, color, fill) ->
-	if fill
-		fillContext context, color
-	else
-		strokeContext context, color
+	strokeContext: (color, lineWidth=2) -> # heh
+		@context.lineWidth = lineWidth
+		@context.strokeStyle = color
+		@context.stroke()
 
-drawLine = (context, x1, y1, x2, y2, color=C_BLACK, alpha=1, lineWidth=2) ->
-	context.globalAlpha = alpha
-	context.beginPath()
-	context.moveTo x1, y1
-	context.lineTo x2, y2
-	strokeContext context, color, lineWidth
+	fillOrStroke: (color, fill) ->
+		if fill
+			@fillContext color
+		else
+			@strokeContext color
 
-drawRect = (context, x, y, w, h, color=C_BLACK, alpha=1) ->
-	context.globalAlpha = alpha
-	context.fillStyle = color
-	context.fillRect x, y, w, h
+	drawLine: (context, x1, y1, x2, y2, color=C_BLACK, alpha=1, lineWidth=2) ->
+		@context.globalAlpha = alpha
+		@context.beginPath()
+		@context.moveTo x1, y1
+		@context.lineTo x2, y2
+		@strokeContext color, lineWidth
 
-drawCircle = (context, x, y, radius, color=C_BLACK, alpha=1, filled=true) ->
-	context.globalAlpha = alpha
-	context.beginPath()
-	context.arc(x, y, radius, 0, 2 * Math.PI, false)
-	fillOrStroke context, color, filled
+	drawRect: (x, y, w, h, color=C_BLACK, alpha=1) ->
+		@context.globalAlpha = alpha
+		@context.fillStyle = color
+		@context.fillRect x, y, w, h
 
-drawCardiod = (context, x, y, a, color=C_BLACK, alpha=1, filled=true) ->
-	context.globalAlpha = alpha
-	context.beginPath()
-	context.moveTo(x, y)
-	for i in [0...21]
-		thetai = i * Math.PI * 2 / 20
-		ri = cardioidRadius a, thetai
-		xi = x + ri * Math.cos thetai
-		yi = y + ri * Math.sin thetai
-		context.moveTo xi, yi if i is 0
-		context.lineTo xi, yi
-	fillOrStroke context, color, filled
+	drawCircle: (x, y, radius, color=C_BLACK, alpha=1, filled=true) ->
+		@context.globalAlpha = alpha
+		@context.beginPath()
+		@context.arc(x, y, radius, 0, 2 * Math.PI, false)
+		@fillOrStroke color, filled
 
-drawQuad = (context, p1, p2, p3, p4, color=C_BLACK, alpha=1, filled=true) ->
-	context.globalAlpha = alpha
-	context.beginPath()
-	context.moveTo p1.x, p1.y
-	context.lineTo p2.x, p2.y
-	context.lineTo p3.x, p3.y
-	context.lineTo p4.x, p4.y
-	context.closePath()
+	drawCardiod: (x, y, a, color=C_BLACK, alpha=1, filled=true) ->
+		@context.globalAlpha = alpha
+		@context.beginPath()
+		@context.moveTo(x, y)
+		for i in [0...21]
+			thetai = i * Math.PI * 2 / 20
+			ri = cardioidRadius a, thetai
+			xi = x + ri * Math.cos thetai
+			yi = y + ri * Math.sin thetai
+			@context.moveTo xi, yi if i is 0
+			@context.lineTo xi, yi
+		@fillOrStroke color, filled
 
-	fillOrStroke context, color, filled
 
-drawPoint = (context, x, y, color=C_BLACK) ->
-	drawCircle(context, x, y, 2, color)
+	drawQuad: (p1, p2, p3, p4, color=C_BLACK, alpha=1, filled=true) ->
+		@context.globalAlpha = alpha
+		@context.beginPath()
+		@context.moveTo p1.x, p1.y
+		@context.lineTo p2.x, p2.y
+		@context.lineTo p3.x, p3.y
+		@context.lineTo p4.x, p4.y
+		@context.closePath()
 
-clearCanvas = (canvas) ->
-	drawRect canvas, 0, 0, 400, 400, "#fff"
+		@fillOrStroke color, filled
+
+	drawPoint: (x, y, color=C_BLACK) ->
+		@drawCircle x, y, 2, color
+
+	clear: ->
+		@drawRect 0, 0, 400, 400, "#fff"
 
 distance = (p1, p2) -> Math.sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y))
 
@@ -111,7 +115,7 @@ class CircleCrown extends Crown
 		new Vec2 @x + r * Math.cos(theta), @y + r * Math.sin(theta)
 
 	draw: ->
-		drawCircle(@context, @x, @y, @radius, C_CROWN, 0.5, false)
+		@context.drawCircle @x, @y, @radius, C_CROWN, 0.5, false
 
 	area: ->
 		Math.PI * @radius * @radius
@@ -134,7 +138,7 @@ class CardioidCrown extends Crown
 		point
 
 	draw: ->
-		drawCardiod @context, @x, @y, @a, C_CROWN, 0.5, false
+		@context.drawCardioid @x, @y, @a, C_CROWN, 0.5, false
 
 	area: ->
 		1.5 * Math.PI * @a * @a
@@ -169,9 +173,7 @@ class TreeNode
 			@parent.children.push this
 
 	draw:  ->
-		drawPoint @context, @x, @y, color=C_NODE
-		for child in @children
-			drawLine @context, @x, @y, child.x, child.y, color=C_NODE
+		@context.drawPoint @x, @y, color=C_NODE
 
 class TreeStructure
 	previousNode: null
@@ -216,8 +218,8 @@ class TreeBranch
 		startWeight = if @parentBranch then @parentBranch.weight else @weight
 		endWeight = @weight
 
-		drawCircle @context, @start.x, @start.y, startWeight, C_TRUNK
-		drawCircle @context, @end.x, @end.y, endWeight, C_TRUNK
+		@context.drawCircle @start.x, @start.y, startWeight, C_TRUNK
+		@context.drawCircle @end.x, @end.y, endWeight, C_TRUNK
 
 		theta = Math.atan2 @end.y - @start.y, @end.x - @start.x
 		thetaLeft = theta + Math.PI / 2
@@ -228,7 +230,7 @@ class TreeBranch
 		p3 = new Vec2 @end.x + Math.cos(thetaRight) * endWeight, @end.y + Math.sin(thetaRight) * endWeight
 		p4 = new Vec2 @end.x + Math.cos(thetaLeft) * endWeight, @end.y + Math.sin(thetaLeft) * endWeight
 
-		drawQuad @context, p1, p2, p3, p4, C_TRUNK
+		@context.drawQuad p1, p2, p3, p4, C_TRUNK
 		
 class Tree
 	constructor: (@context, @structure) ->
@@ -447,6 +449,7 @@ $().ready ->
 
 	canvas = $("#canvas")[0]
 	context = canvas.getContext('2d')
+	context = new GraphicsContext canvas.getContext('2d')
 
 	iterator = null
 	tb = null
@@ -459,7 +462,7 @@ $().ready ->
 		tree = tb.buildTree()
 
 		iterator = setInterval ->
-			clearCanvas context
+			context.clear()
 			tree.draw()
 		, 1000.0 / 20
 
