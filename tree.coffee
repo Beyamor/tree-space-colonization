@@ -47,10 +47,14 @@ class GraphicsContext
 		@context.lineTo x2, y2
 		@strokeContext color, lineWidth
 
-	drawRect: (x, y, w, h, color=C_BLACK, alpha=1) ->
+	drawRect: (x, y, w, h, color=C_BLACK, alpha=1, filled=true) ->
 		@context.globalAlpha = alpha
-		@context.fillStyle = color
-		@context.fillRect x, y, w, h
+		if filled
+			@context.fillStyle = color
+			@context.fillRect x, y, w, h
+		else
+			@context.strokeStyle = color
+			@context.strokeRect x, y, w, h
 
 	drawCircle: (x, y, radius, color=C_BLACK, alpha=1, filled=true) ->
 		@context.globalAlpha = alpha
@@ -135,6 +139,30 @@ class CircleCrown extends Crown
 	adjustForControls: ->
 		super()
 		@radius = @controlValue('crown-radius')
+
+class RectangleCrown extends Crown
+	constructor: (context, x, y) ->
+		super(context, x, y)
+
+	nextPoint: ->
+		x = -@width/2 + Math.random() * @width
+		y = -@height/2 + Math.random() * @height
+		new Vec2 @x + x, @y + y
+
+	draw: (alpha=1) ->
+		@context.drawRect @x - @width/2, @y - @height/2, @width, @height, C_CROWN, alpha, false
+
+	area: ->
+		@width * @height
+
+	getControls: ->
+		super() + """<div>Crown width: <input id="crown-width" type="range" min="0" max="200" step="10" value="100"/></div>
+				<div>Crown length: <input id="crown-length" type="range" min="0" max="200" step="10" value="100"/></div>"""
+
+	adjustForControls: ->
+		super()
+		@width = @controlValue('crown-width')
+		@height = @controlValue('crown-length')
 
 class ToroidCrown extends Crown
 	constructor: (context, x, y) ->
@@ -238,6 +266,8 @@ class CrownSelector
 				@crown = new CardioidCrown @context, CENTER_X, @crownStartY()
 			when 'toroid'
 				@crown = new ToroidCrown @context, CENTER_X, @crownStartY()
+			when 'rectangle'
+				@crown = new RectangleCrown @context, CENTER_X, @crownStartY()
 			else
 				alert 'whoa, unhandled crown'
 
@@ -564,8 +594,8 @@ $().ready ->
 		iterator = setInterval ->
 			crownSelector.update()
 			context.clear()
-			tree.draw()
 			crownSelector.draw()
+			tree.draw()
 		, 1000.0 / 20
 
 	$('#generate-button').click ->
