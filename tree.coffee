@@ -105,6 +105,15 @@ class Crown
 	makePoints: ->
 		(@nextPoint() for i in [0...@numberOfPoints()])
 
+	controlValue: (id) ->
+		$('#' + id).val()
+
+	getControls: ->
+		"""<div>Crown height: <input id="crown-height" type="range" min="0" max="400" step="10" value="260"/></div>"""
+
+	adjustForControls: ->
+		@y = 400 - @controlValue('crown-height')
+
 class CircleCrown extends Crown
 	constructor: (context, pointDensity, x, y, @radius) ->
 		super(context, pointDensity, x, y)
@@ -114,11 +123,18 @@ class CircleCrown extends Crown
 		theta = Math.random() * Math.PI * 2
 		new Vec2 @x + r * Math.cos(theta), @y + r * Math.sin(theta)
 
-	draw: ->
-		@context.drawCircle @x, @y, @radius, C_CROWN, 0.5, false
+	draw: (alpha=1) ->
+		@context.drawCircle @x, @y, @radius, C_CROWN, alpha, false
 
 	area: ->
 		Math.PI * @radius * @radius
+
+	getControls: ->
+		super() + """<div>Crown radius: <input id="crown-radius" type="range" min="0" max="200" step="10" value="100"/></div>"""
+
+	adjustForControls: ->
+		super()
+		@radius = @controlValue('crown-radius')
 
 class CardioidCrown extends Crown
 	constructor: (context, pointDensity, x, y, @a) ->
@@ -137,11 +153,42 @@ class CardioidCrown extends Crown
 		point = @makeSomePoint() until @pointIsValid(point)
 		point
 
-	draw: ->
-		@context.drawCardioid @x, @y, @a, C_CROWN, 0.5, false
+	draw: (alpha=1) ->
+		@context.drawCardioid @x, @y, @a, C_CROWN, alpha, false
 
 	area: ->
 		1.5 * Math.PI * @a * @a
+
+class CrownSelector
+	constructor: (@context) ->
+		@crown = new CircleCrown @context, 0.015, CENTER_X, 140, 100
+		@isShowing = false
+		@alpha = 0
+
+		@fadeIn = 0.2
+		@fadeOut = 0.1
+		@shownAlpha = 0.6
+		@hidAlpha = 0.2
+
+		@makeCrownControls()
+
+	show: -> @isShowing = true
+	hide: -> @isShowing = false
+
+	draw: ->
+		@alpha += @fadeIn if @alpha < @shownAlpha and @isShowing
+		@alpha -= @fadeOut if @alpha > @hidAlpha and not @isShowing
+
+		@crown.draw @alpha if @crown
+
+	makeCrownControls: ->
+		$('#crown-controls').html(@crown.getControls())
+
+	adjustForControls: ->
+		@crown.adjustForControls()
+
+	getCrown: ->
+		return @crown
 
 class Attraction
 	constructor: (@node, @point) ->
@@ -301,7 +348,7 @@ class Tree
 			@includeNextSetOfBranchesToDraw()
 
 class TreeBuilder
-	constructor: (@context) ->
+	constructor: (@context, crownSelector) ->
 		@iterations = 0
 		@maxIterations = 80
 
@@ -318,7 +365,8 @@ class TreeBuilder
 		killDistance = parseFloat $('#kill-distance').val()
 
 		@structure = new TreeStructure @context, CENTER_X, CENTER_Y + 100, nodeDistance, initialHeight
-		@crown = new CircleCrown @context, attractorDensity, CENTER_X, crownHeight, crownRadius
+		#@crown = new CircleCrown @context, attractorDensity, CENTER_X, crownHeight, crownRadius
+		@crown = crownSelector.getCrown()
 
 		@attractors = []
 		for pos in @crown.makePoints()
@@ -426,22 +474,27 @@ $().ready ->
 	console.log "give 'er"
 
 	canvas = $("#canvas")[0]
-	context = canvas.getContext('2d')
 	context = new GraphicsContext canvas.getContext('2d')
 
 	iterator = null
 	tb = null
 
+	crownSelector = new CrownSelector context
+	crownSelector.show()
+
 	newTree = ->
 
-		tb = new TreeBuilder context
+		crownSelector.adjustForControls()
+		tb = new TreeBuilder context, crownSelector
 
 		tb.iterate() until tb.isFinished()
 		tree = tb.buildTree()
 
 		iterator = setInterval ->
+			crownSelector.adjustForControls()
 			context.clear()
 			tree.draw()
+			crownSelector.draw()
 		, 1000.0 / 20
 
 	$('#generate-button').click ->
