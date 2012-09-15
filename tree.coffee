@@ -156,8 +156,8 @@ class RectangleCrown extends Crown
 		@width * @height
 
 	getControls: ->
-		super() + """<div>Crown width: <input id="crown-width" type="range" min="0" max="200" step="10" value="100"/></div>
-				<div>Crown length: <input id="crown-length" type="range" min="0" max="200" step="10" value="100"/></div>"""
+		super() + """<div>Crown width: <input id="crown-width" type="range" min="0" max="400" step="20" value="200"/></div>
+				<div>Crown length: <input id="crown-length" type="range" min="0" max="400" step="20" value="200"/></div>"""
 
 	adjustForControls: ->
 		super()
@@ -196,10 +196,10 @@ class CardioidCrown extends Crown
 	makeSomePoint: ->
 		theta = Math.PI * 2 * Math.random()
 		r = @a * 2 * Math.random()
-		new Vec2(@x + r * Math.cos(theta), @y + r * Math.sin(theta))
+		new Vec2(@x + r * Math.cos(theta), @y + r * Math.sin(theta) + @a)
 
 	pointIsValid: (point) ->
-		inCardioid(@x, @y, @a, point.x, point.y)
+		inCardioid(@x, @y + @a, @a, point.x, point.y)
 
 	nextPoint: ->
 		point = @makeSomePoint()
@@ -207,13 +207,13 @@ class CardioidCrown extends Crown
 		point
 
 	draw: (alpha=1) ->
-		@context.drawCardioid @x, @y, @a, C_CROWN, alpha, false
+		@context.drawCardioid @x, @y + @a, @a, C_CROWN, alpha, false
 
 	area: ->
 		1.5 * Math.PI * @a * @a
 
 	getControls: ->
-		super() + """<div>Crown radius: <input id="crown-radius" type="range" min="0" max="200" step="10" value="100"/></div>"""
+		super() + """<div>Crown radius: <input id="crown-radius" type="range" min="0" max="200" step="10" value="75"/></div>"""
 
 	adjustForControls: ->
 		super()
@@ -241,8 +241,9 @@ class CrownSelector
 	crownStartY: ->
 		if $('#crown-height').length != 0 then $('#crown-height').val() else 140
 
-	show: -> @isShowing = true
-	hide: -> @isShowing = false
+	show: ->
+		@isShowing = true
+		@stopShowingTimer = @stopShowingPeriod
 
 	draw: ->
 		@crown.draw @alpha if @crown
@@ -251,8 +252,7 @@ class CrownSelector
 		$('#crown-controls').html(@crown.getControls())
 		$('#crown-controls').children().change(
 			(e) =>
-				@isShowing = true
-				@stopShowingTimer = @stopShowingPeriod
+				@show()
 		)
 
 	getCrownSelection: ->
@@ -273,6 +273,7 @@ class CrownSelector
 
 		@makeCrownControls()
 		@adjustForControls()
+		@show()
 
 	update: ->
 		@alpha += @fadeIn if @alpha < @shownAlpha and @isShowing
@@ -581,7 +582,6 @@ $().ready ->
 	tb = null
 
 	crownSelector = new CrownSelector context
-	crownSelector.show()
 
 	newTree = ->
 
