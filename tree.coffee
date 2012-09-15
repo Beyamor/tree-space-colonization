@@ -97,16 +97,16 @@ class Vec2
 	normal: -> new Vec2 @x / @length(), @y / @length()
 
 class Crown
-	constructor: (@context, @pointDensity, @x, @y) ->
+	constructor: (@context, @x, @y) ->
 
-	numberOfPoints: ->
-		@area() * @pointDensity
+	numberOfPoints: (density) ->
+		@area() * density
 
-	makePoints: ->
-		(@nextPoint() for i in [0...@numberOfPoints()])
+	makePoints: (density) ->
+		(@nextPoint() for i in [0...@numberOfPoints(density)])
 
 	controlValue: (id) ->
-		$('#' + id).val()
+		parseFloat($('#' + id).val())
 
 	getControls: ->
 		"""<div>Crown height: <input id="crown-height" type="range" min="0" max="400" step="10" value="260"/></div>"""
@@ -115,8 +115,8 @@ class Crown
 		@y = 400 - @controlValue('crown-height')
 
 class CircleCrown extends Crown
-	constructor: (context, pointDensity, x, y, @radius=100) ->
-		super(context, pointDensity, x, y)
+	constructor: (context, x, y) ->
+		super(context, x, y)
 
 	nextPoint: ->
 		r = Math.random() * @radius
@@ -136,9 +136,34 @@ class CircleCrown extends Crown
 		super()
 		@radius = @controlValue('crown-radius')
 
+class ToroidCrown extends Crown
+	constructor: (context, x, y) ->
+		super(context, x, y)
+
+	nextPoint: ->
+		r = @inner + Math.random() * (@outer - @inner)
+		theta = Math.random() * Math.PI * 2
+		new Vec2 @x + r * Math.cos(theta), @y + r * Math.sin(theta)
+
+	draw: (alpha=1) ->
+		@context.drawCircle @x, @y, @inner, C_CROWN, alpha, false
+		@context.drawCircle @x, @y, @outer, C_CROWN, alpha, false
+
+	area: ->
+		Math.PI * (@outer * @outer - @inner * @inner)
+
+	getControls: ->
+		super() + """<div>Crown inner radius: <input id="crown-inner" type="range" min="0" max="200" step="10" value="50"/></div>
+		             <div>Crown outer radius: <input id="crown-outer" type="range" min="0" max="200" step="10" value="100"/></div>"""
+
+	adjustForControls: ->
+		super()
+		@inner = @controlValue('crown-inner')
+		@outer = @controlValue('crown-outer')
+
 class CardioidCrown extends Crown
-	constructor: (context, pointDensity, x, y, @a=100) ->
-		super(context, pointDensity, x, y)
+	constructor: (context, x, y) ->
+		super(context, x, y)
 
 	makeSomePoint: ->
 		theta = Math.PI * 2 * Math.random()
@@ -208,9 +233,11 @@ class CrownSelector
 	newSelectedCrown: ->
 		switch @getCrownSelection()
 			when 'circle'
-				@crown = new CircleCrown @context, 0.015, CENTER_X, @crownStartY()
+				@crown = new CircleCrown @context, CENTER_X, @crownStartY()
 			when 'cardioid'
-				@crown = new CardioidCrown @context, 0.015, CENTER_X, @crownStartY()
+				@crown = new CardioidCrown @context, CENTER_X, @crownStartY()
+			when 'toroid'
+				@crown = new ToroidCrown @context, CENTER_X, @crownStartY()
 			else
 				alert 'whoa, unhandled crown'
 
@@ -303,8 +330,8 @@ class TreeBranch
 		startWeight = if @parentBranch then @parentBranch.weight else @weight
 		endWeight = @weight
 
-		@context.drawCircle @start.x, @start.y, startWeight, C_TRUNK
-		@context.drawCircle @end.x, @end.y, endWeight, C_TRUNK
+		@context.drawCircle @start.x, @start.y, (startWeight), C_TRUNK
+		@context.drawCircle @end.x, @end.y, (endWeight), C_TRUNK
 
 		theta = Math.atan2 @end.y - @start.y, @end.x - @start.x
 		thetaLeft = theta + Math.PI / 2
@@ -387,7 +414,6 @@ class Tree
 	draw: ->
 		for branch in @branchesToDraw
 			branch.draw()
-			#drawLine @context, branch.start.x, branch.start.y, branch.end.x, branch.end.y, C_TRUNK, 1, branch.weight
 
 		if not @allBranchesAreBeingDrawn
 			@includeNextSetOfBranchesToDraw()
@@ -410,11 +436,10 @@ class TreeBuilder
 		killDistance = parseFloat $('#kill-distance').val()
 
 		@structure = new TreeStructure @context, CENTER_X, CENTER_Y + 100, nodeDistance, initialHeight
-		#@crown = new CircleCrown @context, attractorDensity, CENTER_X, crownHeight, crownRadius
 		@crown = crownSelector.getCrown()
 
 		@attractors = []
-		for pos in @crown.makePoints()
+		for pos in @crown.makePoints(attractorDensity)
 			@attractors.push new AttractionPoint @context,
 								pos.x,
 								pos.y,
