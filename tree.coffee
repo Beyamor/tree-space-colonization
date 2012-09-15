@@ -115,7 +115,7 @@ class Crown
 		@y = 400 - @controlValue('crown-height')
 
 class CircleCrown extends Crown
-	constructor: (context, pointDensity, x, y, @radius) ->
+	constructor: (context, pointDensity, x, y, @radius=100) ->
 		super(context, pointDensity, x, y)
 
 	nextPoint: ->
@@ -137,7 +137,7 @@ class CircleCrown extends Crown
 		@radius = @controlValue('crown-radius')
 
 class CardioidCrown extends Crown
-	constructor: (context, pointDensity, x, y, @a) ->
+	constructor: (context, pointDensity, x, y, @a=100) ->
 		super(context, pointDensity, x, y)
 
 	makeSomePoint: ->
@@ -159,9 +159,17 @@ class CardioidCrown extends Crown
 	area: ->
 		1.5 * Math.PI * @a * @a
 
+	getControls: ->
+		super() + """<div>Crown radius: <input id="crown-radius" type="range" min="0" max="200" step="10" value="100"/></div>"""
+
+	adjustForControls: ->
+		super()
+		@a = @controlValue('crown-radius')
+
+
 class CrownSelector
 	constructor: (@context) ->
-		@crown = new CircleCrown @context, 0.015, CENTER_X, 140, 100
+		@crown = new CircleCrown @context, 0.015, CENTER_X, @crownStartY(), 100
 		@isShowing = false
 		@stopShowingTimer = 0
 		@stopShowingPeriod = 20
@@ -174,10 +182,14 @@ class CrownSelector
 
 		@makeCrownControls()
 
+	crownStartY: ->
+		if $('#crown-height').length != 0 then $('#crown-height').val() else 140
+
 	show: -> @isShowing = true
 	hide: -> @isShowing = false
 
-	draw: ->		@crown.draw @alpha if @crown
+	draw: ->
+		@crown.draw @alpha if @crown
 
 	makeCrownControls: ->
 		$('#crown-controls').html(@crown.getControls())
